@@ -37,8 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tracker',
+    'tracker'
 ]
+
+AUTH_USER_MODEL = 'tracker.Users'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -76,7 +78,7 @@ WSGI_APPLICATION = 'course_progresstracker.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'course_tracker',
+        'NAME': 'online_course_tracker',
         'USER': 'postgres',
         'PASSWORD': 'AIR...@@$$^^007',
         'HOST': 'localhost',
