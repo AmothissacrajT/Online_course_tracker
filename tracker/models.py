@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
+from django.utils import timezone 
 
 # Create your models here.
 
@@ -8,15 +9,40 @@ class Users(AbstractUser):
     pass
 
 
+
+class Tag(models.Model):
+    name = models.CharField(max_length=20,unique = True)
+
+    def __str__(self):
+        return self.name
+
+
 class Courses(models.Model):
     title = models.CharField(max_length=30)
     instructor = models.CharField(max_length=20)
     description = models.CharField(max_length=50)
-    url = models.URLField(unique = True, default = "NA")
+    url = models.URLField(default = "NA")
     no_modules = models.IntegerField(default = 0)
+    price = models.IntegerField(default =0)
+    tags = models.ManyToManyField(Tag, related_name='courses') #creates a join table tracker_courses_tags automatically
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete = models.CASCADE,
+        related_name = 'course_author',
+        null = False,
+        default = 1
+    )
+    is_public = models.BooleanField(default = True)
+
+    class Meta:
+        unique_together = ('created_by','url')
     
     def __str__(self):
         return self.title
+
+
+
+
 
 
 class Modules(models.Model):
@@ -74,19 +100,19 @@ class StudySessions(models.Model):
         related_name = 'session'
     )
 
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    duration_min = models.IntegerField()
+    start_time = models.DateTimeField(default = timezone.now)
+    end_time = models.DateTimeField(null = True)
+    duration_min = models.IntegerField(null = True)
 
     def __str__(self):
         return f"{self.user}'s study session {self.course}"
 
 
 class Streaks(models.Model):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete = models.CASCADE,
-        related_name = 'streaks'
+        related_name = 'streak'
     )
     
     current_streak = models.IntegerField(default = 0)

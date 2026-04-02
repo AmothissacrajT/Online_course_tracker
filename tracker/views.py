@@ -1,12 +1,15 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from .models import Courses, Modules, Enrollments, Users
+from .models import Courses, Modules, Enrollments, Users, Tag, StudySessions, Streaks
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model, login, authenticate
+from django.utils import timezone
+from datetime import timedelta 
 import json
 
 # Create your views here.
 User = get_user_model()
+MIN_REQUIRED_MINUTES = 1
 
 def testrun (request):
     print("Request Objest:",request)
@@ -78,7 +81,9 @@ def courses(request):
 
     #Get the list of all publicly available course (already posted in out website and wanted it to been publicly)
     if request.method == 'GET':
-        courses = Courses.objects.all()
+
+        user = request.user
+        courses = Courses.objects.filter( Q(is_public = True) | Q(created_by = user))
         response = []
         for course in courses:
             response.append(
@@ -86,7 +91,8 @@ def courses(request):
                     "id" : course.id,
                     "title" : course.title,
                     "instructor" : course.instructor,
-                    "No of Modules" : course.no_modules
+                    "owner" : course.created_by.username,
+                    "is_public" : course.is_public
                 }
             )
         return JsonResponse(response, safe = False)
@@ -99,13 +105,17 @@ def courses(request):
         user = request.user
 
         # Details about the course
+        tags_list = data.get("tags",[]) 
         title = data.get("title")
         instructor = data.get("instructor")
         no_modules = data.get("no_of_modules")
         url = data.get("url")
+        is_public = data.get("is_public",True)
+        price = data.get("price",0)
+        created_by = user
 
         # check if the course already exist, uploaded by any other user (or themselves) using url
-        course = Courses.objects.filter(url=url)
+        course = Courses.objects.filter(url=url,created_by = created_by)
 
         # The course does not already exist so we add this course to Courses DB and enroll 
         if not course:
@@ -114,9 +124,16 @@ def courses(request):
                 title = title,
                 instructor = instructor,
                 no_modules = no_modules,
-                url = url
+                url = url,  
+                created_by = created_by,
+                price = price,
+                is_public = is_public
             )
             course.save()
+
+            for tag_name in tags_list:
+                tag, created = Tag.objects.get_or_create(name = tag_name.lower())
+                course.tags.add(tag)
 
             #Enroll the user automatically to this course
             enrollment = Enrollments(
@@ -240,6 +257,129 @@ def enrollments(request):
             "course_title" : course.title
         }, safe = False)
 
+
+@csrf_exempt
+def study_sessions(request):
+    if request.method == 'GET':
+
+        user = user.request
+
+        sessions = StudySessions.objects.filter(user = user)
+
+        response = []
+        for session in sessions:
+            response.append({
+                "session_id" : session.id,
+                "course_title" : session.course.title,
+                "start_time" : session.start_time,
+                "end_time" : session.end_time,
+                "session_duration_min" : session.duration_min
+            })
+
+        return JsonResponse(response)
+
+
+@csrf_exempt
+def start_session(request):
+
+    if request.method == 'POST':
+
+        data = request.body.decode()
+        data = json.loads(data)
+
+        user = request.user
+        course = Courses.objects.get(id=data.get("course_id"))
+        start_time = timezone.now()
+        end_time = None
+        duration_min = None 
+        
+        session = StudySessions(
+            user = user, 
+            course=course, 
+            start_time = start_time, 
+            end_time = end_time, 
+            duration_min = duration_min
+        )
+
+
+        session.save()
+
+        return JsonResponse({
+            "session_id" : session.id,
+            "course_title" : session.course.title,
+        })
+
+
+
+@csrf_exempt
+def end_session(request,id):
+
+    if request.method == 'PATCH':
+
+        user = request.user
+        session = StudySessions.objects.get(id = id, user = user)
+
+        if session.end_time is not None:
+            return JsonResponse({"error" : "session already ended"}, status = 400)
+
+        session.end_time = timezone.now()
+        duration = session.end_time - session.start_time
+        duration_min = int(duration.total_seconds() / 60)
+        session.duration_min = duration_min
+        session.save()
+
+        if duration_min > MIN_REQUIRED_MINUTES:
+            print("Streak kulla vandhachu")
+            update_streak(user)
+
+        return JsonResponse({
+            "Session_id" : session.id,
+            "duration" : session.duration_min,
+            "end_time" : session.end_time
+        })
+
+
+
+def update_streak(user):
+
+    today = timezone.localdate()
+
+    streak, created = Streaks.objects.get_or_create(user=user)
+
+    #Already Checked Today no need to check again
+    if streak.last_activity_date == today:
+        return streak
+
+    yesterday = today - timedelta(days=1)
+
+    # New to streak so will be none in last activity date
+    if  streak.last_activity_date is None:
+
+        streak.current_streak = 1
+        streak.longest_streak = 1
+        streak.streak_start_date = today
+
+    #Streak going on
+    elif streak.last_activity_date == yesterday:
+        streak.current_streak += 1
+
+        if streak.current_streak > streak.longest_streak:
+            streak.longest_streak = streak.current_streak
+
+    else:
+
+        streak.current_streak = 1
+        streak_start_date = today
+
+    streak.last_activity_date = today
+    streak.save()
+
+
+    return JsonResponse({
+        "streak_id" : streak.id,
+        "streak_count" : streak.current_streak,
+        "streak_max" : streak.longest_streak 
+    })
 
 
 '''
