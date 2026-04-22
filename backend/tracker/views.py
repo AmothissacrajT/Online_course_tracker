@@ -5,18 +5,29 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model, login, authenticate
 from django.utils import timezone
 from datetime import timedelta 
+from .forms import CustomUserCreationForm
 import json
 
 # Create your views here.
 User = get_user_model()
+
 MIN_REQUIRED_MINUTES = 1
 
 def testrun (request):
     print("Request Objest:",request)
     data = {"Name": "Hello World"}
     return JsonResponse(data)
+'''
+# views.py
+def signup_view(request):
+    form = CustomUserCreationForm(request.POST or None)
 
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        
 
+    return render(request, "signup.html", {"form": form})
+'''
 #To create a new user
 @csrf_exempt
 def signup(request):
@@ -24,7 +35,7 @@ def signup(request):
     if request.method == 'POST':
         data = request.body.decode()
         data = json.loads(data)
-
+        print(data)
         username = data.get("username")
         email = data.get("email")
         password = data.get("password")
@@ -41,14 +52,13 @@ def signup(request):
             },status = 400)
 
         #create a new user
-        user = Users.objects.create_user(username = username, email = email, password = password)
+        user = User.objects.create_user(username = username, email = email, password = password)
 
         user.save()
         return JsonResponse({
             "message" : "User Successfully created",
             "user_id" : user.id
         })
-
 
 
 #To login
@@ -410,3 +420,4 @@ def modules(request):
         new_module.save()
         return JsonResponse({"status": f"Module created {new_module.id}"})
 '''
+
