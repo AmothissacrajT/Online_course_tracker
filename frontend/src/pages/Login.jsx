@@ -1,26 +1,22 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-const Signup = () => {
+const Login = () => {
+
     const [username,setUsername] = useState("");
     const [password,setPassword] = useState("");
-    const [email,setEmail] = useState("");
 
-    const navigate = useNavigate();
-
-    const handleSignup = async() => {
+    const handleLogin = async() => {
         try{
-            const res = await axios.post("/api/signup/", {
+            const res = await axios.post("/api/login/", {
                 username,
                 password,
-                email,
             });
 
             alert(res.data.message);
         }
         catch (err) {
-            alert(err.response?.data?.message || "Signup failed");
+            alert(err.response?.data?.message || "Login failed");
         }
     }
 
@@ -48,29 +44,17 @@ const Signup = () => {
                                 className="w-[20vw] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
                     </div>
-                    <div>
-                        <label className ="text-sm font-medium text-gray-700" >Email</label>
-                        <input onChange = {(e) => setEmail(e.target.value)} 
-                                placeholder = "Email"
-                                className="w-[20vw] px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                    </div>
-                    <button onClick = {handleSignup} 
+                    <button onClick = {handleLogin} 
                             className=" self-center mt-4
                             w-[10vw] bg-blue-600 text-white py-2 rounded-lg 
                             hover:bg-blue-700 transition duration-200 font-medium
                             "> 
-                         SignUp
+                         Login
                     </button>
                 </div>
             </div>
-
-                <div className="flex flex-row m-10 gap-2">
-                    <p className=" text-md text-gray-500">Already have an account?</p>
-                    <span onClick = {() => navigate("/login")} className="font-bold cursor-pointer text-blue-600">Login</span>
-                </div>
         </div>
-    );
+    )
 }
 
-export default Signup;
+export default Login;
