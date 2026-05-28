@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import timedelta 
 from .forms import CustomUserCreationForm
 import json
+from django.db.models import Q
 
 # Create your views here.
 User = get_user_model()
@@ -82,6 +83,28 @@ def login_view(request):
         return JsonResponse({"message" : "Invalid credentials"}, status = 400)
 
 
+#List of My Courses (Not publicly Posted)
+@csrf_exempt
+def home(request):
+
+    #Get the list of all publicly available course (already posted in out website and wanted it to been publicly)
+    if request.method == 'GET':
+
+        user = request.user
+        courses = Courses.objects.filter(Q(created_by = user))
+        response = []
+        for course in courses:
+            response.append(
+                {
+                    "id" : course.id,
+                    "title" : course.title,
+                    "instructor" : course.instructor,
+                    "owner" : course.created_by.username,
+                    "description" : course.description,
+                    "is_public" : course.is_public
+                }
+            )
+        return JsonResponse(response, safe = False)
 
 
 
@@ -102,6 +125,7 @@ def courses(request):
                     "title" : course.title,
                     "instructor" : course.instructor,
                     "owner" : course.created_by.username,
+                    "description" : course.description,
                     "is_public" : course.is_public
                 }
             )
@@ -118,6 +142,7 @@ def courses(request):
         tags_list = data.get("tags",[]) 
         title = data.get("title")
         instructor = data.get("instructor")
+        description = data.get("description")
         no_modules = data.get("no_of_modules")
         url = data.get("url")
         is_public = data.get("is_public",True)
@@ -133,6 +158,7 @@ def courses(request):
             course = Courses(
                 title = title,
                 instructor = instructor,
+                description = description,
                 no_modules = no_modules,
                 url = url,  
                 created_by = created_by,

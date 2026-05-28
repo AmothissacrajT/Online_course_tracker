@@ -1,10 +1,13 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
 
     const [username,setUsername] = useState("");
     const [password,setPassword] = useState("");
+
+    const navigate = useNavigate();
 
     const handleLogin = async() => {
         try{
@@ -14,6 +17,7 @@ const Login = () => {
             });
 
             alert(res.data.message);
+            navigate("/home");
         }
         catch (err) {
             alert(err.response?.data?.message || "Login failed");
