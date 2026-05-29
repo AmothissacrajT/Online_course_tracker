@@ -56,9 +56,9 @@ const Signup = () => {
                         />
                     </div>
                     <button onClick = {handleSignup} 
-                            className=" self-center mt-4
+                            className=" self-center mt-4 font-medium
                             w-[10vw] bg-blue-600 text-white py-2 rounded-lg 
-                            hover:bg-blue-700 transition duration-200 font-medium
+                            hover:bg-blue-700 transition duration-200 
                             "> 
                          SignUp
                     </button>

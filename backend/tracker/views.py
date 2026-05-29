@@ -143,9 +143,9 @@ def courses(request):
         title = data.get("title")
         instructor = data.get("instructor")
         description = data.get("description")
-        no_modules = data.get("no_of_modules")
+        no_modules = data.get("modules")
         url = data.get("url")
-        is_public = data.get("is_public",True)
+        is_public = data.get("isPublic",True)
         price = data.get("price",0)
         created_by = user
 
