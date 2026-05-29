@@ -70,8 +70,9 @@ const Newcourse = () => {
 
                         <div className="flex flex-col gap-2">
                             <label className="text-lg font-semibold"> Description </label>
-                            <input
+                            <textarea
                                 onChange = {(e) => setDescription(e.target.value)}
+                                placeholder="Enter description..."
                                 className = "w-[30vw] h-[25vh] px-6 py-3 rounded-xl border border-gray-500 shadow-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                             /> 
                         </div>
